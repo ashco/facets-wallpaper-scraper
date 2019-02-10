@@ -5,34 +5,36 @@ const fs = require('fs');
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   const url = 'http://www.facets.la/wallpapers/';
-  const urlImage = 'http://www.facets.la/wallpaper/W_2014_360_TOTEM.jpg';
 
-  // TODO
+  page.setDefaultTimeout(99999999);
+
   await page.goto(url);
-  // Collect array of wallpaper pages
+
+  // Collect array of page links
   const hrefArray = await page.evaluate(() => {
     const aTagArray = Array.from(
       document.getElementById('thumbs').getElementsByTagName('a')
     );
-    const hrefArray = aTagArray.map(a => {
-      return a.href;
-    });
-    return hrefArray;
+    return aTagArray.map(a => a.href);
   });
 
-  // forEach link in #thumbs
-  for (href in hrefArray) {
+  // Loop through page links
+  for (let href of hrefArray) {
     await page.goto(href, { waitUntil: 'networkidle2' });
-    const imageLink = await page.evaluate(() => {
-      return document.getElementsByTagName('img')[0].src;
+    const imageUrl = await page.evaluate(() => {
+      return document
+        .getElementById('facet-wallpaper')
+        .getElementsByTagName('img')[0].src;
     });
-    await page.goto(imageLink, { waitUntil: 'networkidle2' });
 
-    const url = await page.url();
-    const urlSplit = url.split('/');
-    const filename = urlSplit[urlSplit.length - 1];
+    const split = imageUrl.split('/');
+    const filename = split[split.length - 1];
 
-    fs.writeFile(`./images/${filename}`, await viewSource.buffer(), function(
+    const viewSource = await page.goto(imageUrl, {
+      waitUntil: 'networkidle2',
+    });
+
+    fs.writeFile(`./download/${filename}`, await viewSource.buffer(), function(
       err
     ) {
       if (err) {
@@ -42,24 +44,6 @@ const fs = require('fs');
       console.log(`The file was saved! - ${filename}`);
     });
   }
-  // 1.2 click on link
-  // 1.3 wait for page to load
-  // 1.4 click on image link
-  // 1.5 wait for page to load
-  // 1.6 write file
-  // 1.7 repeat
 
-  // const viewSource = await page.goto(urlImage, {
-  //   waitUntil: 'networkidle2',
-  // });
-
-  // fs.writeFile('./images/test-image.jpg', await viewSource.buffer(), function(err) {
-  //   if (err) {
-  //     return console.log(err);
-  //   }
-
-  //   console.log('The file was saved!');
-  // });
-
-  // await browser.close();
+  browser.close();
 })();
