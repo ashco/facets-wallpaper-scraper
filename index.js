@@ -34,7 +34,7 @@ const fs = require('fs');
       waitUntil: 'networkidle2',
     });
 
-    fs.writeFile(`./download/${filename}`, await viewSource.buffer(), function(
+    fs.writeFile(`./images/${filename}`, await viewSource.buffer(), function(
       err
     ) {
       if (err) {
