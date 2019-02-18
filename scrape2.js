@@ -4,7 +4,7 @@ const fs = require('fs');
 (async () => {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
-  const url = 'http://www.facets.la/wallpapers/';
+  const url = 'http://justinmaller.com/wallpapers/';
 
   page.setDefaultTimeout(99999999);
 
@@ -13,17 +13,25 @@ const fs = require('fs');
   // Collect array of page links
   const hrefArray = await page.evaluate(() => {
     const aTagArray = Array.from(
-      document.getElementById('thumbs').getElementsByTagName('a')
+      document.querySelectorAll('.image')
+      // .getElementById('main-container')
+      // .getElementsByClassName('image')
+      // .getElementsByTagName('a')
     );
     return aTagArray.map(a => a.href);
   });
 
+  const filteredArr = hrefArray.splice(84);
+  console.log(filteredArr);
+  // console.log(hrefArray);
+
   // Loop through page links
-  for (let href of hrefArray) {
+  for (let href of filteredArr) {
+    // for (let href of hrefArray) {
     await page.goto(href, { waitUntil: 'networkidle2' });
     const imageUrl = await page.evaluate(() => {
       return document
-        .getElementById('facet-wallpaper')
+        .getElementById('wallwindow')
         .getElementsByTagName('img')[0].src;
     });
 
@@ -34,15 +42,17 @@ const fs = require('fs');
       waitUntil: 'networkidle2',
     });
 
-    fs.writeFile(`./images/${filename}`, await viewSource.buffer(), function(
-      err
-    ) {
-      if (err) {
-        return console.log(err);
-      }
+    fs.writeFile(
+      `./wallpapers-2/${filename}`,
+      await viewSource.buffer(),
+      function(err) {
+        if (err) {
+          return console.log(err);
+        }
 
-      console.log(`The file was saved! - ${filename}`);
-    });
+        console.log(`The file was saved! - ${filename}`);
+      }
+    );
   }
 
   browser.close();
